@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>pubuliu</title>
+    <style>
+    * {
+        padding: 0;
+        margin: 0;
+    }
+
+    #container {
+        width: 1000px;
+        margin: 50px auto 0;
+        position: relative;
+        border: 1px solid red;
+    }
+
+    #container img {
+        position: absolute;
+        left: 0;
+        top: 0;
+    }
+    </style>
+    <script src='http://libs.baidu.com/jquery/1.9.1/jquery.js'></script>
+    <script>
+    window.onload = function() {
+        var box = $('#container');
+        var w = 200;
+        var space = 10;
+        var iWidth = w + space;
+        var iCells = 0;
+        var iPage=0;
+        var arrT = [];
+        var arrL = [];
+        var iBtn = true;
+        var urls = 'http://www.wookmark.com/api/json/popular?callback=?';
+
+        function setCells() {
+            iCells = Math.floor($(window).innerWidth() / iWidth);
+            document.title = iCells;
+            //var allWidth = iCells * iWidth;
+            box.css('width',iWidth*iCells-space);
+        }
+        setCells();
+        for (var i = 0; i < arrL.iCells; i++) {
+            arrL.push(i * iWidth);
+            arrT.push(0);
+        }
+
+        function getData() {
+            if (iBtn) {
+                iBtn = false;
+                $.getJSON(urls, 'iPage='+iPage, function(data) {
+                    $.each(data, function(index, obj) {
+                        var oImg = $('<img/>');
+                        oImg.attr('src', obj.preview);
+                        box.append(oImg);
+                        var iHeight = iWidth / obj.width * obj.height;
+                        oImg.css({
+                            width: w,
+                            height: iHeight
+                        });
+                        var iMinIndex = getMin();
+                        oImg.css({
+                            left: arrT[iMinIndex],
+                            top: arrL[iMinIndex]
+                        });
+                        arrT[iMinIndex] += iHeight;
+                        iBtn = false;
+                    })
+                })
+            }
+        
+
+
+
+
+
+                getData();
+
+        function getMin() {
+            var _index = 0;
+            var iv = arrT[0];
+            for (var i = 0; i < arrT.length; i++) {
+                if (arrT[i] < iv) {
+                    iv = arrT[i];
+                    _index = i;
+                }
+            }
+            return _index;
+        }
+
+    }
+    </script>
+</head>
+
+<body>
+    <div id="container"></div>
+</body>
+
+</html>

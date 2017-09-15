@@ -1,0 +1,378 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>bee</title>
+    <style>
+    * {
+        padding: 0;
+        margin: 0;
+    }
+
+    li {
+        list-style: none;
+    }
+
+    #box {
+        width: 1210px;
+        height: 800px;
+        margin: 50px auto 0;
+        background-color: #000;
+        position: relative;
+    }
+
+    #score {
+        color: #fff;
+        font-size: 20px;
+    }
+
+    #bee {
+        position: relative;
+    }
+
+    #start {
+        cursor: pointer;
+        color: #fff;
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        -webkit-transform: translateX(-50%) translateY(-50%);
+        -moz-transform: translateX(-50%) translateY(-50%);
+        -ms-transform: translateX(-50%) translateY(-50%);
+        transform: translateX(-50%) translateY(-50%);
+    }
+
+    button {
+        font-size: 30px;
+    }
+
+    .friend1 {
+        width: 50px;
+        height: 50px;
+        background: url(jia.png) no-repeat;
+        float: left;
+    }
+
+    .friend2 {
+        width: 50px;
+        height: 50px;
+        background: url(shu.jpg) no-repeat;
+        float: left;
+    }
+
+    .friend3 {
+        width: 50px;
+        height: 50px;
+        background: url(rui.jpg) no-repeat;
+        float: left;
+    }
+
+    .bullet {
+        width: 1px;
+        overflow: hidden;
+        height: 10px;
+        background: #fff;
+        position: absolute;
+    }
+
+    .air1 {
+        width: 50px;
+        height: 50px;
+        background: url(fei.jpg) no-repeat;
+        position: absolute;
+    }
+    </style>
+    <script src='http://libs.baidu.com/jquery/1.9.1/jquery.js'></script>
+    <script>
+    window.onload = function() {
+        var oBtn = $('#start');
+
+        oBtn.click(function() {
+            this.style.display = 'none';
+            Game.init('#box'); //游戏开始
+
+        })
+    }
+
+    var Game = {
+        init: function(id) { //初始化
+            this.oParent = $(id); //变成属性，方便其他方法调用
+            this.createScore();
+            this.createEnemy(0);
+            this.createAir();
+        },
+        createScore: function() {
+            var oS = $('<div></div>');
+            oS.attr({ 'id': 'score' });
+            oS.html('积分：<span>0</span>');
+            this.oParent.append(oS);
+            this.oSNum = $('span')[0];
+        },
+        createEnemy: function(iNow) { //敌人的创建
+            var gk = this.gk[iNow];
+            var arr = [];
+            var oUl = $('<ul></ul>');
+            this.oUl = oUl;
+            oUl.attr({ 'id': 'bee' });
+            oUl.css({
+                'width': gk.colNUm * 60 + 'px',
+            });
+            this.oParent.append(oUl);
+            oUl.css({
+                'left': (this.oParent.width() - oUl.width()) / 2 + 'px',
+            });
+            for (var i = 0; i < gk.eMap.length; i++) {
+            // for (var i = 0; i < 2; i++) {
+                var oLi = $('<li></li>');
+                oLi.attr({
+                    'class': this.oEnermy[gk.eMap[i]].style,
+                });
+                oLi.css({
+                    'margin-right': 10 + 'px',
+                    'margin-top': 10 + 'px',
+                });
+                oLi.data({
+                    'blood': this.oEnermy[gk.eMap[i]].blood,
+                    'speed': this.oEnermy[gk.eMap[i]].speed,
+                    'score': this.oEnermy[gk.eMap[i]].score
+                })
+              
+                oUl.append(oLi);
+            }
+            this.aLi = $('li');
+            for (var i = 0; i < this.aLi.length; i++) {
+                arr.push([this.aLi[i].offsetLeft, this.aLi[i].offsetTop]);
+            }
+           
+            for (var i = 0; i < this.aLi.length; i++) {
+                $(this.aLi[i]).css({
+                    'position': 'absolute',
+                    'left': arr[i][0],
+                    'top': arr[i][1],
+                });
+
+            }
+
+            this.runEnermy(gk);
+        },
+        runEnermy: function(gk) { //移动敌人
+            var This = this; //改一下this指向。写在定时器里的话指向window，所以写出来让他指向Game
+            var L = 0;
+            var R = this.oParent.width() - this.oUl.width();
+
+            setInterval(function() {
+                if (parseInt(This.oUl.css('left')) >= R) {
+                    gk.isPeedX = -10;
+                    This.oUl.css({
+                        'top': This.oUl.offset().top + gk.isPeedY + 'px',
+                    });
+                } else if (parseInt(This.oUl.css('left')) < L) {
+                    gk.isPeedX = 10;
+                    This.oUl.css({
+                        'top': This.oUl.offset().top + gk.isPeedY + 'px',
+                    });
+                }
+
+                This.oUl.css({
+                    'left': parseInt(This.oUl.css('left')) + gk.isPeedX + 'px',
+
+                });
+            }, 200);
+            setInterval(function(){
+                This.oneMove();
+            },gk.times)
+        },
+        oneMove:function(){//单兵作战
+            var This=this;
+            var nowLi=this.aLi[Math.floor(Math.random()*This.aLi.length)];//随机生成一个li
+            setInterval(function(){
+                var a=This.oA.offset().left-$(nowLi).offset().left;
+                var b=This.oA.offset().top-$(nowLi).offset().top;
+                var c=Math.sqrt(a*a+b*b);
+
+                var iSX=$(nowLi).data('speed') *a/c;
+                var iSY=$(nowLi).data('speed') *b/c;
+                 //console.log(gk.eMap[rand].speed);
+                
+                $(nowLi).css({
+                    'left':$(nowLi).offset().left+iSX+'px',
+                    'top':$(nowLi).offset().top+iSY+'px',
+                });
+            },30);
+
+        },
+        createAir: function() {
+            var oA = $('<div></div>');
+            this.oA = oA;
+            oA.attr({
+                'class': this.air.style,
+            });
+            this.oParent.append(oA);
+            oA.css({
+                'left': (this.oParent.width() - oA.width()) / 2 + 'px',
+                'top': this.oParent.height() - oA.height() + 'px',
+            });
+            this.bindAir();
+        },
+        bindAir: function() { //操作飞机
+            var timer = null;
+            var iNum = 0;
+            var This = this;
+            $(document).keydown(
+                function(e) {
+                    var e = e || window.event;
+                    if (!timer) {
+                        timer = setInterval(show, 30);
+                    }
+
+                    if (e.keyCode == 37) {
+                        iNum = 1;
+                    } else if (e.keyCode == 39) {
+                        iNum = 2;
+                    }
+                   
+                });
+            $(document).keyup(
+                function(e) {
+
+                    var e = e || window.event;
+                    clearInterval(timer);
+                    timer = null;
+                    iNum = 0;
+                    if (e.keyCode == 32) {
+                        This.createBullet();
+
+                    }
+
+                }
+            );
+
+            function show() {
+                if (iNum == 1) {
+                    This.oA.css({
+                        'left': parseInt(This.oA.css('left')) - 10 + 'px',
+                    });
+                } else if (iNum == 2) {
+                    This.oA.css({
+                        'left': parseInt(This.oA.css('left')) + 10 + 'px',
+                    });
+                }
+            }
+
+
+
+        },
+        createBullet: function() { //子弹的创建
+            var oB = $('<div></div>');
+            oB.attr({
+                'class': this.air.bulletstyle,
+            });
+            this.oParent.append(oB);
+            oB.css({
+                'left': parseInt(this.oA.css('left')) + this.oA.width() / 2 + 'px',
+                'top': parseInt(this.oA.css('top')) - 10 + 'px',
+            });
+            this.runBullet(oB);
+        },
+        runBullet: function(oB) {
+            var This = this;
+            oB.timer = setInterval(function() {
+                if (parseInt(oB.css('top')) < -10) {
+                    clearInterval(oB.timer);
+                    oB.remove();
+                } else {
+                    oB.css({
+                        'top': parseInt(oB.css('top')) - 10 + 'px',
+                    });
+                };
+
+                for (var i = 0; i < This.aLi.length; i++) {
+                    if (This.pz(oB, $(This.aLi[i]))) {
+                    	if($(This.aLi[i]).data('blood')==1){
+                            $(This.oSNum).html(parseInt($(This.oSNum).html())+$(This.aLi[i]).data('score')); 
+                    		$(This.aLi[i]).remove(); 
+                            
+                    	}else{
+                    		var blood  = $(This.aLi[i]).data('blood') - 1
+                            $(This.aLi[i]).data('blood',blood);
+                    	} 
+                        clearInterval(oB.timer);
+                        oB.remove();       
+                       
+                    }
+                }
+            }, 30);
+        },
+        pz: function(obj1, obj2) { //碰撞检测
+            var L1 = obj1.offset().left;
+            var R1 = obj1.offset().left + obj1.width();
+            var T1 = obj1.offset().top;
+            var B1 = obj1.offset().top + obj1.height();
+
+            var L2 = obj2.offset().left;
+            var R2 = obj2.offset().left + obj2.width();
+            var T2 = obj2.offset().top;
+            var B2 = obj2.offset().top + obj2.height();
+            if (R1 < L2 || L1 > R2 || B1 < T2 || T1 > B2) { //未碰着
+                return false;
+            } else {
+
+                return true;
+
+            }
+        },
+        oEnermy: {
+            e1: { style: 'friend1', blood: 1, speed: 5, score: 1 },
+            e2: { style: 'friend2', blood: 2, speed: 7, score: 2 },
+            e3: { style: 'friend3', blood: 3, speed: 10, score: 3 },
+        },
+        gk: [{
+                eMap: [
+                    'e1', 'e1', 'e1', 'e1', 'e1', 'e2', 'e2', 'e2', 'e2', 'e1',
+                    'e1', 'e1', 'e1', 'e1', 'e3', 'e3', 'e3', 'e1', 'e1', 'e1',
+                    'e2', 'e2', 'e1', 'e1', 'e3', 'e2', 'e3', 'e2', 'e2', 'e2',
+                    'e3', 'e3', 'e3', 'e2', 'e1', 'e2', 'e2', 'e2', 'e2', 'e2',
+                ],
+                colNUm: 10,
+                isPeedX: 10,
+                isPeedY: 10,
+                times: 2000,
+            },
+            {
+                eMap: [
+                    'e1', 'e1', 'e1', 'e1', 'e1', 'e1', 'e1', 'e1', 'e1', 'e1',
+                    'e1', 'e1', 'e1', 'e1', 'e1', 'e1', 'e1', 'e1', 'e1', 'e1',
+                    'e2', 'e2', 'e2', 'e2', 'e2', 'e2', 'e2', 'e2', 'e2', 'e2',
+                    'e2', 'e2', 'e2', 'e2', 'e2', 'e2', 'e2', 'e2', 'e2', 'e2',
+                ],
+                colNUm: 10,
+                isPeedX: 10,
+                isPeedY: 10,
+                times: 2000,
+            }
+        ],
+        air: { //飞机的数据
+            style: 'air1',
+            bulletstyle: 'bullet'
+        }
+    }
+    </script>
+</head>
+
+<body>
+    <div id="box">
+        <!--  <div class="friend1"></div>
+    <div class="friend1"></div>
+    <div class="friend2"></div>
+    <div class="friend2"></div>
+    <div class="friend3"></div>
+    <div class="friend3"></div>
+    <div class="friend3"></div> -->
+        <div id="start">
+            <button>开始游戏</button>
+        </div>
+    </div>
+</body>
+
+</html>

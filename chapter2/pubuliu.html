@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>瀑布流</title>
+    <style>
+    * {
+        margin: 0;
+        padding: 0;
+    }
+
+    #container {
+        /* width: 1000px; */
+        border: 1px solid red;
+        margin: 50px auto 0;
+        position: relative;
+    }
+
+    #container img {
+        position: absolute;
+    }
+
+    #loader {
+        width: 100%;
+        height: 60px;
+        background: url('') no-repeat center #fff;
+        position: fixed;
+        bottom: 0;
+        left: 0;
+    }
+    </style>
+    <script src="http://libs.baidu.com/jquery/1.9.1/jquery.js"></script>
+    <script>
+    $(function() {
+        var oContainer = $('#container');
+        var iWidth = 200; //列宽
+        var iSpace = 10; //间隔款
+        var iOuterWidth = iWidth + iSpace; //列实际宽
+        var iCells = 0; //总列
+        var iPage = 0;
+        var iBtn = true;
+        var arrL = []; //设置当前图片的left
+        var arrT = [];
+        var sUrl = 'http://www.wookmark.com/api/json/popular?callback=?'
+
+        function setCells() {
+            iCells = Math.floor($(window).innerWidth() / iOuterWidth);
+            if(iCells<3){
+            	iCells=3;
+            }else if(iCells>6){
+            	iCells=6;
+            }
+            document.title = iCells;
+            oContainer.css('width', iOuterWidth * iCells - iSpace)
+        }
+        setCells();
+        for (var i = 0; i < iCells; i++) {
+            arrT.push(0);
+            arrL.push(i * iOuterWidth);
+        }
+
+
+        function getData() {
+            if (iBtn) {
+                iBtn = false;
+                $.getJSON(sUrl, 'page=' + iPage, function(data) {
+                    $.each(data, function(index, obj) {
+                        var oImg = $('<img />');
+                        oImg.attr('src', obj.preview);
+                        oContainer.append(oImg);
+                        var iHeight = iWidth / obj.width * obj.height;
+                        oImg.css({
+                            width: iWidth,
+                            height: iHeight
+                        })
+                        var iMinIndex = getMin();
+                        oImg.css({
+                            left: arrL[iMinIndex],
+                            top: arrT[iMinIndex]
+                        });
+                        arrT[iMinIndex] += iHeight + 10;
+
+                        iBtn = true;
+                    });
+                });
+            }
+        }
+        getData();
+        // $(window).on('scroll', function() {
+
+        //     var iH = $(window).scrollTop() + $(window).innerHeight();
+        //     var iMinIndex = getMin();
+        //     if (arrT[iMinIndex] + oContainer.offset().top < iH) {
+        //         iPage++;
+        //         getData();
+        //     }
+        // });
+        // $(window).on('resize', function() {
+        // 	var iOldCells=iCells;
+        //     setCells();
+
+        //     var iH = $(window).scrollTop() + $(window).innerHeight();
+        //     var iMinIndex = getMin();
+        //     if (arrT[iMinIndex] + oContainer.offset().top < iH) {
+        //         iPage++;
+        //         getData();
+        //     }
+
+
+
+        //     if(iOldCells==iCells){
+        //     	return;
+        //     }
+        //     arrT = [];
+        //     arrL = [];
+        //     for (var i = 0; i < iCells; i++) {
+        //         arrT.push(0);
+        //         arrL.push(i * iOuterWidth);
+        //     }
+        //     var aImgs = oContainer.find('img');
+        //     aImgs.each(function() {
+        //         var iMinIndex = getMin();
+                
+
+        //         // $(this).css({
+        //         //     left: arrL[iMinIndex],
+        //         //     top: arrT[iMinIndex]
+        //         // });
+        //         $(this).animate({
+        //             left: arrL[iMinIndex],
+        //             top: arrT[iMinIndex]
+        //         });
+        //         arrT[iMinIndex] += $(this).height() + 10;
+
+        //     });
+
+        // })
+
+        function getMin() {
+            var iv = arrT[0];
+            var _index = 0;
+            for (var i = 1; i < arrT.length; i++) {
+                if (arrT[i] < iv) {
+                    iv = arrT[i];
+                    _index = i;
+                }
+            }
+            return _index;
+        }
+    })
+    </script>
+</head>
+
+<body>
+    <div id="container"></div>
+    <div id="loader"></div>
+</body>
+
+</html>
